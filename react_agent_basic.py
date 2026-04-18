@@ -1,28 +1,25 @@
-import os
-from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_community.tools import TavilySearchResults
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain import hub
+from langgraph.graph import StateGraph, MessagesState, START, END
 
-load_dotenv()
-
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash", 
-    google_api_key=os.getenv("GOOGLE_API_KEY")
-)
+#import os
+#from dotenv import load_dotenv
 
 
-tools = [TavilySearchResults(max_results=2)]
-prompt = hub.pull("hwchase17/react")
-agent = create_react_agent(llm, tools, prompt)
+#load_dotenv()
 
-agent_executor = AgentExecutor(
-    agent=agent, 
-    tools=tools, 
-    verbose=True, 
-    handle_parsing_errors=True
-)
+#model="gemini-2.0-flash", 
+#google_api_key=os.getenv("GOOGLE_API_KEY")
 
-if __name__ == "__main__":
-    agent_executor.invoke({"input": "Como está o tempo no Estreito de Ormuz hoje?"})
+
+def mock_llm(state: MessagesState):
+    return {"messages": [{"role": "ai", "content": "hello world"}]}
+
+
+graph = StateGraph(MessagesState)
+graph.add_node(mock_llm)
+graph.add_edge(START, "mock_llm")
+graph.add_edge("mock_llm", END)
+graph = graph.compile()
+
+print(graph.invoke({"messages": [{"role": "user", "content": "hi!"}]}))
+
+
